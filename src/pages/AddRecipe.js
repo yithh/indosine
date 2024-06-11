@@ -1,12 +1,13 @@
-import React from 'react';
 import './AddRecipe.css';
+import RecipeForm from '../components/RecipeForm';
 
-const AddRecipe = () => {
+
+function RecipePage() {
   return (
-    <div className="add-recipe-page">
-      <h1>Add Recipe</h1>
+    <div className="recipePage-main">
+      <RecipeForm/>
     </div>
   );
-};
+}
 
-export default AddRecipe;
+export default RecipePage;
