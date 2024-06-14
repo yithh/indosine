@@ -98,14 +98,17 @@ const SearchPage = () => {
           <p>Select Ingredients:</p>
           {dummyIngredients.map((ingredient) => (
             <div key={ingredient}>
-              <label>
+              <label className="labelapapun">
                 <input
                   type="checkbox"
+                  className="cekbok"
                   value={ingredient}
                   checked={selectedIngredients.includes(ingredient)}
                   onChange={() => handleIngredientChange(ingredient)}
                 />
-                {ingredient}
+                <div className="ing">
+                  {ingredient}
+                </div>
               </label>
             </div>
           ))}

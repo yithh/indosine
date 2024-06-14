@@ -106,11 +106,17 @@ const RecipePage = () => {
       <div className="more-recipes">
         <h2>More Recipes</h2>
         <div className="more-recipes-list">
-          {dummyRecipes.map((otherRecipe) => (
-            <div key={otherRecipe.id} className="more-recipe-card">
-              {otherRecipe.title}
-            </div>
-          ))}
+          {dummyRecipes
+            .filter((otherRecipe) => otherRecipe.id !== recipe.id)
+            .map((otherRecipe) => (
+              <div
+                key={otherRecipe.id}
+                className="more-recipe-card"
+                onClick={() => navigate(`/recipe/${otherRecipe.id}`)}
+              >
+                {otherRecipe.title}
+              </div>
+            ))}
         </div>
       </div>
     </div>
