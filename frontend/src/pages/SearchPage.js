@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../FirebaseConfig'; // Adjust the path if necessary
 import './SearchPage.css';
 
 const dummyIngredients = [
@@ -11,58 +13,21 @@ const dummyIngredients = [
   'Pepper',
   'Tomatoes',
   'Cheese',
-];
-
-const dummyRecipes = [
-  {
-    id: 1,
-    title: 'Telur Dadar Daun Bawang',
-    ingredients: ['Eggs', 'Spring Onion', 'Salt', 'Cooking Oil'],
-  },
-  {
-    id: 2,
-    title: 'Cheese Omelette',
-    ingredients: ['Eggs', 'Cheese', 'Salt', 'Pepper'],
-  },
-  {
-    id: 3,
-    title: 'Garlic Fried Rice',
-    ingredients: ['Rice', 'Garlic', 'Salt', 'Cooking Oil'],
-  },
-  {
-    id: 4,
-    title: 'Tomato Salad',
-    ingredients: ['Tomatoes', 'Salt', 'Pepper', 'Olive Oil'],
-  },
+  'Rice',
+  'Ketchup',
 ];
 
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const [filteredRecipes, setFilteredRecipes] = useState(dummyRecipes);
+  const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const [recipes, setRecipes] = useState([]);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    filterRecipes(searchTerm, selectedIngredients);
-  }, [searchTerm, selectedIngredients]);
-
-  const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-  };
-
-  const handleIngredientChange = (ingredient) => {
-    const index = selectedIngredients.indexOf(ingredient);
-    if (index === -1) {
-      setSelectedIngredients([...selectedIngredients, ingredient]);
-    } else {
-      setSelectedIngredients(selectedIngredients.filter(item => item !== ingredient));
-    }
-  };
-
-  const filterRecipes = (term, ingredients) => {
-    let filtered = dummyRecipes;
+  const filterRecipes = useCallback((term, ingredients) => {
+    let filtered = recipes;
 
     if (term) {
       filtered = filtered.filter((recipe) =>
@@ -79,7 +44,47 @@ const SearchPage = () => {
     }
 
     setFilteredRecipes(filtered);
+  }, [recipes]);
+
+  useEffect(() => {
+    const recipesRef = ref(database, 'recipes');
+    onValue(recipesRef, (snapshot) => {
+      const data = snapshot.val();
+      const recipeList = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key],
+      }));
+      setRecipes(recipeList);
+      setFilteredRecipes(recipeList);
+    });
+  }, []);
+
+  useEffect(() => {
+    filterRecipes(searchTerm, selectedIngredients);
+  }, [searchTerm, selectedIngredients, filterRecipes]);
+
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
   };
+
+  const handleIngredientSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setIngredientSearchTerm(term);
+  };
+
+  const handleIngredientChange = (ingredient) => {
+    const index = selectedIngredients.indexOf(ingredient);
+    if (index === -1) {
+      setSelectedIngredients([...selectedIngredients, ingredient]);
+    } else {
+      setSelectedIngredients(selectedIngredients.filter(item => item !== ingredient));
+    }
+  };
+
+  const filteredDummyIngredients = dummyIngredients.filter(ingredient =>
+    ingredient.toLowerCase().includes(ingredientSearchTerm)
+  );
 
   const handleCardClick = (recipeId) => {
     navigate(`/recipe/${recipeId}`);
@@ -94,9 +99,15 @@ const SearchPage = () => {
           value={searchTerm}
           onChange={handleSearch}
         />
+        <input
+          type="text"
+          placeholder="Search ingredients..."
+          value={ingredientSearchTerm}
+          onChange={handleIngredientSearch}
+        />
         <div>
           <p>Select Ingredients:</p>
-          {dummyIngredients.map((ingredient) => (
+          {filteredDummyIngredients.map((ingredient) => (
             <div key={ingredient}>
               <label className="labelapapun">
                 <input
