@@ -4,25 +4,13 @@ import { ref, onValue } from 'firebase/database';
 import { database } from '../FirebaseConfig'; // Adjust the path if necessary
 import './SearchPage.css';
 
-const dummyIngredients = [
-  'Eggs',
-  'Spring Onion',
-  'Salt',
-  'Cooking Oil',
-  'Garlic',
-  'Pepper',
-  'Tomatoes',
-  'Cheese',
-  'Rice',
-  'Ketchup',
-];
-
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
 
   const navigate = useNavigate();
 
@@ -50,12 +38,17 @@ const SearchPage = () => {
     const recipesRef = ref(database, 'recipes');
     onValue(recipesRef, (snapshot) => {
       const data = snapshot.val();
-      const recipeList = Object.keys(data).map(key => ({
-        id: key,
-        ...data[key],
-      }));
-      setRecipes(recipeList);
-      setFilteredRecipes(recipeList);
+      if (data) {
+        const recipeList = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key],
+        }));
+        setRecipes(recipeList);
+        setFilteredRecipes(recipeList);
+        const allIngredients = recipeList.flatMap(recipe => recipe.ingredients);
+        const uniqueIngredients = [...new Set(allIngredients)];
+        setIngredients(uniqueIngredients);
+      }
     });
   }, []);
 
@@ -82,8 +75,13 @@ const SearchPage = () => {
     }
   };
 
-  const filteredDummyIngredients = dummyIngredients.filter(ingredient =>
-    ingredient.toLowerCase().includes(ingredientSearchTerm)
+  const handleDeselectIngredient = (ingredient) => {
+    setSelectedIngredients(selectedIngredients.filter(item => item !== ingredient));
+  };
+
+  const filteredIngredients = ingredients.filter(ingredient =>
+    ingredient.toLowerCase().includes(ingredientSearchTerm) &&
+    !selectedIngredients.includes(ingredient)
   );
 
   const handleCardClick = (recipeId) => {
@@ -95,20 +93,25 @@ const SearchPage = () => {
       <div className="search-column">
         <input
           type="text"
-          placeholder="Search recipes..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-        <input
-          type="text"
-          placeholder="Search ingredients..."
+          placeholder="Cari bahan"
           value={ingredientSearchTerm}
           onChange={handleIngredientSearch}
         />
+        <div className="selected-ingredients-container">
+          {selectedIngredients.map((ingredient, index) => (
+            <div
+              key={index}
+              className="selected-ingredient"
+              onClick={() => handleDeselectIngredient(ingredient)}
+            >
+              {ingredient}
+            </div>
+          ))}
+        </div>
         <div>
-          <p>Select Ingredients:</p>
-          {filteredDummyIngredients.map((ingredient) => (
-            <div key={ingredient}>
+          <p>Ingredients</p>
+          {filteredIngredients.map((ingredient, index) => (
+            <div key={index}>
               <label className="labelapapun">
                 <input
                   type="checkbox"
@@ -126,19 +129,33 @@ const SearchPage = () => {
         </div>
       </div>
       <div className="results-column">
-        {filteredRecipes.length > 0 ? (
-          filteredRecipes.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="recipe-card"
-              onClick={() => handleCardClick(recipe.id)}
-            >
-              {recipe.title}
-            </div>
-          ))
-        ) : (
-          <p>No recipes found.</p>
-        )}
+        <input
+          type="text"
+          placeholder="Cari resep"
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+        <div className="recipes-grid">
+          {filteredRecipes.length > 0 ? (
+            filteredRecipes.map((recipe) => (
+              <div
+                key={recipe.id}
+                className="recipe-card"
+                onClick={() => handleCardClick(recipe.id)}
+              >
+                <div className="recipe-card-image">
+                  <img src="path/to/image" alt={recipe.title} /> {/* Replace with actual image source */}
+                </div>
+                <div className="recipe-card-content">
+                  <h3>{recipe.title}</h3>
+                  <p>Anda kurang {recipe.ingredients.length - selectedIngredients.length} bahan</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No recipes found.</p>
+          )}
+        </div>
       </div>
     </div>
   );
