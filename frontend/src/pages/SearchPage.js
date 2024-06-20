@@ -91,70 +91,77 @@ const SearchPage = () => {
   return (
     <div className="search-page">
       <div className="search-column">
-        <input
-          type="text"
-          placeholder="Cari bahan"
-          value={ingredientSearchTerm}
-          onChange={handleIngredientSearch}
-        />
-        <div className="selected-ingredients-container">
-          {selectedIngredients.map((ingredient, index) => (
-            <div
-              key={index}
-              className="selected-ingredient"
-              onClick={() => handleDeselectIngredient(ingredient)}
-            >
-              {ingredient}
-            </div>
-          ))}
-        </div>
-        <div>
-          <p>Ingredients</p>
-          {filteredIngredients.map((ingredient, index) => (
-            <div key={index}>
-              <label className="labelapapun">
-                <input
-                  type="checkbox"
-                  className="cekbok"
-                  value={ingredient}
-                  checked={selectedIngredients.includes(ingredient)}
-                  onChange={() => handleIngredientChange(ingredient)}
-                />
-                <div className="ing">
+        <div className="search-column-container">
+          <div className="search-input-container">
+            <input
+              type="text"
+              placeholder="Cari bahan"
+              value={ingredientSearchTerm}
+              onChange={handleIngredientSearch}
+              className="search-input"
+            />
+          </div>
+          <p className="ingredients-title">Selected Ingredients</p>
+          <div className="selected-ingredients-container">
+            {selectedIngredients.map((ingredient, index) => (
+              <div
+                key={index}
+                className="selected-ingredient"
+                onClick={() => handleDeselectIngredient(ingredient)}
+              >
+                {ingredient}
+              </div>
+            ))}
+          </div>
+          <p className="ingredients-title">Ingredients</p>
+          <div className="ingredients-list">
+            <div className="available-ingredients">
+              {filteredIngredients.map((ingredient, index) => (
+                <div
+                  key={index}
+                  className="available-ingredient-box"
+                  onClick={() => handleIngredientChange(ingredient)}
+                >
                   {ingredient}
                 </div>
-              </label>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
       <div className="results-column">
-        <input
-          type="text"
-          placeholder="Cari resep"
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-        <div className="recipes-grid">
-          {filteredRecipes.length > 0 ? (
-            filteredRecipes.map((recipe) => (
-              <div
-                key={recipe.id}
-                className="recipe-card"
-                onClick={() => handleCardClick(recipe.id)}
-              >
-                <div className="recipe-card-image">
-                  <img src="path/to/image" alt={recipe.title} /> {/* Replace with actual image source */}
-                </div>
-                <div className="recipe-card-content">
-                  <h3>{recipe.title}</h3>
-                  <p>Anda kurang {recipe.ingredients.length - selectedIngredients.length} bahan</p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>No recipes found.</p>
-          )}
+        <div className="results-column-container">
+          <div className="search-input-container">
+            <input
+              type="text"
+              placeholder="Cari resep"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="search-input"
+            />
+          </div>
+          <div className="recipes-grid-container">
+            <div className="recipes-grid">
+              {filteredRecipes.length > 0 ? (
+                filteredRecipes.map((recipe) => (
+                  <div
+                    key={recipe.id}
+                    className="recipe-card"
+                    onClick={() => handleCardClick(recipe.id)}
+                  >
+                    <div className="recipe-card-image">
+                      <img src="path/to/image" alt={recipe.title} /> {/* Replace with actual image source */}
+                    </div>
+                    <div className="recipe-card-content">
+                      <h3>{recipe.title}</h3>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No recipes found.</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
