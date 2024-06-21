@@ -42,34 +42,36 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* <footer className="footer">
-        <div className="footer-column">
-          <h3>Explore Indosine</h3>
-          <a href="#forums">Forums</a>
-          <a href="#recipes">Recipes</a>
-          <a href="#join">Join us!</a>
-        </div>
-        <div className="footer-column">
-          <h3>Useful Links</h3>
-          <a href="#account">Your Account</a>
-          <a href="#posts">Your Posts</a>
-          <a href="#help">Help</a>
-        </div>
-        <div className="footer-column">
-          <h3>Contact</h3>
-          <p>Phone: +XX XXXX XXXX</p>
-          <p>Email: info@indosine.com</p>
-        </div>
-        <div className="footer-column">
-          <h3>Follow us</h3>
-          <a href="#instagram">Instagram</a>
-          <a href="#twitter">Twitter</a>
-          <a href="#youtube">YouTube</a>
-        </div>
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-column">
+              <h3>Explore Indosine</h3>
+              <a href="#forums">Forums</a>
+              <a href="#recipes">Recipes</a>
+              <a href="#join">Join us!</a>
+            </div>
+            <div className="footer-column">
+              <h3>Useful Links</h3>
+              <a href="#account">Your Account</a>
+              <a href="#posts">Your Posts</a>
+              <a href="#help">Help</a>
+            </div>
+            <div className="footer-column">
+              <h3>Contact</h3>
+              <p>Phone: +XX XXXX XXXX</p>
+              <p>Email: info@indosine.com</p>
+            </div>
+            <div className="footer-column">
+              <h3>Follow us</h3>
+              <a href="#instagram">Instagram</a>
+              <a href="#twitter">Twitter</a>
+              <a href="#youtube">YouTube</a>
+            </div>
+          </div>
         <div className="footer-bottom">
           <p>&copy; 2024 Copyright: Indosine</p>
         </div>
-      </footer> */}
+      </footer>
     </div>
   );
 };
