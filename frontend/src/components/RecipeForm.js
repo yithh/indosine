@@ -1,29 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './RecipeForm.css';
 import axios from 'axios';
+import { ref, set, onValue, get } from 'firebase/database'; // Import get function
+import { database } from '../FirebaseConfig';
 import UploadImage from './UploadImage';
 
 const dummyUnits = ['g', 'kg', 'ml', 'l', 'cup', 'tbsp', 'tsp'];
-const dummyIngredients = ['Flour', 'Sugar', 'Butter', 'Eggs', 'Milk', 'Salt'];
 
 function RecipeForm() {
   const [recipe, setRecipe] = useState({
-    description: '',
-    name: '',
-    servings: '',
-    anonymous: false,
+    background: '',
+    title: '',
+    region: '',
     ingredients: [{ amount: '', unit: '', name: '' }],
     instructions: [''],
     imageUrl: '',
   });
+  const [ingredients, setIngredients] = useState([]);
+  const [regions, setRegions] = useState([]);
+  const [submissionMessage, setSubmissionMessage] = useState('');
 
-  const [image, setImage] = useState(null);
+  useEffect(() => {
+    // Fetch available ingredients and regions from the database
+    const ingredientsRef = ref(database, 'ingredients');
+    onValue(ingredientsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setIngredients(Object.keys(data));
+      }
+    });
+
+    const regionsRef = ref(database, 'regions');
+    onValue(regionsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setRegions(Object.keys(data));
+      }
+    });
+  }, []);
+
+  const standardizeInput = (input, list) => {
+    const standardizedInput = input.toLowerCase();
+    for (let item of list) {
+      if (item.toLowerCase() === standardizedInput) {
+        return item;
+      }
+    }
+    return input;
+  };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setRecipe({
       ...recipe,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     });
   };
 
@@ -78,10 +108,47 @@ function RecipeForm() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Replace with actual database submission
-    console.log('Recipe submitted: ', recipe);
+
+    // Standardize region
+    const standardizedRegion = standardizeInput(recipe.region, regions);
+
+    // Standardize ingredients
+    const standardizedIngredients = recipe.ingredients.map(ingredient => ({
+      ...ingredient,
+      name: standardizeInput(ingredient.name, ingredients),
+    }));
+
+    const amountIngredients = standardizedIngredients.map(ingredient => 
+      `${ingredient.amount} ${ingredient.unit} of ${ingredient.name}`
+    );
+
+    const newRecipe = {
+      ...recipe,
+      region: standardizedRegion,
+      ingredients: standardizedIngredients.map(ingredient => ingredient.name),
+      amount_ingredients: amountIngredients,
+      image: recipe.imageUrl,
+    };
+
+    const recipesRef = ref(database, 'recipes');
+    const recipesSnapshot = await get(recipesRef);
+    const recipeCount = recipesSnapshot.exists() ? Object.keys(recipesSnapshot.val()).length : 0;
+    const newRecipeId = recipeCount + 1;
+
+    const newRecipeRef = ref(database, `recipes/${newRecipeId}`);
+    await set(newRecipeRef, newRecipe);
+
+    setRecipe({
+      background: '',
+      title: '',
+      region: '',
+      ingredients: [{ amount: '', unit: '', name: '' }],
+      instructions: [''],
+      imageUrl: '',
+    });
+    setSubmissionMessage('Recipe submitted successfully!');
   };
 
   return (
@@ -92,28 +159,29 @@ function RecipeForm() {
           <UploadImage onImageUpload={handleImageUpload} />
           <input
             type="text"
-            name="name"
-            value={recipe.name}
+            name="title"
+            value={recipe.title}
             onChange={handleChange}
             placeholder="Recipe name"
+            autoComplete="off"
           />
           <input
             type="text"
-            name="servings"
-            value={recipe.servings}
+            name="region"
+            value={recipe.region}
             onChange={handleChange}
-            placeholder="Servings"
+            placeholder="Region"
+            autoComplete="off"
           />
-          <label className="anonymous-label">
-            <input
-              type="checkbox"
-              name="anonymous"
-              checked={recipe.anonymous}
-              onChange={handleChange}
-            />
-            Post as Anonymous
-          </label>
+          <textarea
+            name="background"
+            value={recipe.background}
+            onChange={handleChange}
+            placeholder="Description"
+            autoComplete="off"
+          />
           <button type="submit">Post Recipe</button>
+          {submissionMessage && <div className="submission-message">{submissionMessage}</div>}
         </div>
 
         <div className="ingredients-and-instructions">
@@ -122,11 +190,12 @@ function RecipeForm() {
             {recipe.ingredients.map((ingredient, index) => (
               <div key={index} className="ingredient">
                 <input
-                  type="text"
+                  type="number"
                   name="amount"
                   value={ingredient.amount}
                   onChange={(e) => handleIngredientChange(index, e)}
                   placeholder="Amount"
+                  autoComplete="off"
                 />
                 <select
                   name="unit"
@@ -138,16 +207,14 @@ function RecipeForm() {
                     <option key={i} value={unit}>{unit}</option>
                   ))}
                 </select>
-                <select
+                <input
+                  type="text"
                   name="name"
                   value={ingredient.name}
                   onChange={(e) => handleIngredientChange(index, e)}
-                >
-                  <option value="">Select Ingredient</option>
-                  {dummyIngredients.map((ingredient, i) => (
-                    <option key={i} value={ingredient}>{ingredient}</option>
-                  ))}
-                </select>
+                  placeholder="Ingredient"
+                  autoComplete="off"
+                />
                 {recipe.ingredients.length > 1 && (
                   <button
                     type="button"
@@ -172,6 +239,7 @@ function RecipeForm() {
                   value={instruction}
                   onChange={(e) => handleInstructionChange(index, e)}
                   placeholder="Instruction"
+                  autoComplete="off"
                 />
                 {recipe.instructions.length > 1 && (
                   <button

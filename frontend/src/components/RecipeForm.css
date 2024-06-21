@@ -22,17 +22,11 @@ h2 {
 
 textarea,
 input[type="text"],
+input[type="number"],
 select {
   width: calc(100% - 22px);
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-input[type="checkbox"] {
-  width: 10%;
-  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
 }
