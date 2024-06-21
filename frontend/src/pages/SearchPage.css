@@ -155,3 +155,14 @@
   font-size: 14px;
   color: #555;
 }
+
+.region-select {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  max-width: 50vh;
+}
+
+.cari-resep{
+  max-width: 70vh;
+}

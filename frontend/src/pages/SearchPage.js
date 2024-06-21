@@ -8,13 +8,15 @@ const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
   const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [ingredients, setIngredients] = useState([]);
+  const [regions, setRegions] = useState([]);
 
   const navigate = useNavigate();
 
-  const filterRecipes = useCallback((term, ingredients) => {
+  const filterRecipes = useCallback((term, ingredients, region) => {
     let filtered = recipes;
 
     if (term) {
@@ -29,6 +31,10 @@ const SearchPage = () => {
           recipe.ingredients.includes(ingredient)
         )
       );
+    }
+
+    if (region) {
+      filtered = filtered.filter((recipe) => recipe.region === region);
     }
 
     setFilteredRecipes(filtered);
@@ -48,13 +54,15 @@ const SearchPage = () => {
         const allIngredients = recipeList.flatMap(recipe => recipe.ingredients);
         const uniqueIngredients = [...new Set(allIngredients)];
         setIngredients(uniqueIngredients);
+        const allRegions = [...new Set(recipeList.map(recipe => recipe.region))];
+        setRegions(allRegions);
       }
     });
   }, []);
 
   useEffect(() => {
-    filterRecipes(searchTerm, selectedIngredients);
-  }, [searchTerm, selectedIngredients, filterRecipes]);
+    filterRecipes(searchTerm, selectedIngredients, selectedRegion);
+  }, [searchTerm, selectedIngredients, selectedRegion, filterRecipes]);
 
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
@@ -79,6 +87,10 @@ const SearchPage = () => {
     setSelectedIngredients(selectedIngredients.filter(item => item !== ingredient));
   };
 
+  const handleRegionChange = (e) => {
+    setSelectedRegion(e.target.value);
+  };
+
   const filteredIngredients = ingredients.filter(ingredient =>
     ingredient.toLowerCase().includes(ingredientSearchTerm) &&
     !selectedIngredients.includes(ingredient)
@@ -86,6 +98,7 @@ const SearchPage = () => {
 
   const handleCardClick = (recipeId) => {
     navigate(`/recipe/${recipeId}`);
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -131,7 +144,7 @@ const SearchPage = () => {
       </div>
       <div className="results-column">
         <div className="results-column-container">
-          <div className="search-input-container">
+          <div className="search-input-container cari-resep">
             <input
               type="text"
               placeholder="Cari resep"
@@ -139,6 +152,12 @@ const SearchPage = () => {
               onChange={handleSearch}
               className="search-input"
             />
+            <select className="region-select" value={selectedRegion} onChange={handleRegionChange}>
+              <option value="">All Regions</option>
+              {regions.map((region, index) => (
+                <option key={index} value={region}>{region}</option>
+              ))}
+            </select>
           </div>
           <div className="recipes-grid-container">
             <div className="recipes-grid">
@@ -150,7 +169,7 @@ const SearchPage = () => {
                     onClick={() => handleCardClick(recipe.id)}
                   >
                     <div className="recipe-card-image">
-                      <img src="path/to/image" alt={recipe.title} /> {/* Replace with actual image source */}
+                      <img src={recipe.image} alt={recipe.title} /> {/* Replace with actual image source */}
                     </div>
                     <div className="recipe-card-content">
                       <h3>{recipe.title}</h3>

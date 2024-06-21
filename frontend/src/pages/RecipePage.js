@@ -30,10 +30,39 @@ const RecipePage = () => {
           id: key,
           ...data[key],
         }));
-        setOtherRecipes(recipeList.filter((recipe) => recipe.id !== id));
+        if (recipe) {
+          setOtherRecipes(getSimilarRecipes(recipeList.filter((recipe) => recipe.id !== id), recipe));
+        }
       }
     });
-  }, [id]);
+  }, [id, recipe]);
+
+  const getSimilarRecipes = (allRecipes, currentRecipe) => {
+    if (!currentRecipe || !currentRecipe.ingredients) {
+      return [];
+    }
+
+    return allRecipes
+      .map(recipe => {
+        const ingredientMatchCount = recipe.ingredients?.filter(ingredient =>
+          currentRecipe.ingredients.includes(ingredient)
+        ).length || 0;
+        const regionMatch = recipe.region === currentRecipe.region ? 1 : 0;
+        return { ...recipe, score: ingredientMatchCount + regionMatch };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4);
+  };
+
+  const handleNavigate = (recipeId) => {
+    navigate(`/recipe/${recipeId}`);
+    window.scrollTo(0, 0);
+  };
+
+  const handleBack = () => {
+    navigate(-1);
+    window.scrollTo(-100, 0);
+  };
 
   if (!recipe) {
     return <p>Recipe not found</p>;
@@ -41,27 +70,31 @@ const RecipePage = () => {
 
   return (
     <div className="recipe-page">
-      <button onClick={() => navigate(-1)}>Back</button>
+      <button onClick={handleBack}>Back</button>
       <div className="recipe-header">
         <div className="recipe-header-content">
           <div className="recipe-image">
-            <img src="[Image Placeholder]" alt={recipe.title} /> {/* Replace with actual image source */}
+            <img src={recipe.image} alt={recipe.title} /> {/* Replace with actual image source */}
           </div>
           <h1>{recipe.title}</h1>
-          <p>by: Anonymous</p>
+          <p>by: {recipe.author}</p>
         </div>
       </div>
       <div className="recipe-details">
         <div className="recipe-card">
           <h2>Background</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          <p>{recipe.background}</p>
         </div>
         <div className="recipe-card">
           <h2>Ingredients</h2>
           <ul>
-            {recipe.ingredients.map((ingredient, index) => (
-              <li key={index}>{ingredient}</li>
-            ))}
+            {recipe.amount_ingredients ? (
+              recipe.amount_ingredients.map((ingredient, index) => (
+                <li key={index}>{ingredient}</li>
+              ))
+            ) : (
+              <li>No ingredients available</li>
+            )}
           </ul>
         </div>
         <div className="recipe-card">
@@ -72,14 +105,14 @@ const RecipePage = () => {
             ))}
           </ol>
         </div>
-        <div className="recipe-card">
+        {/* <div className="recipe-card">
           <h2>Reviews</h2>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
         </div>
         <div className="recipe-card">
           <h2>Comments</h2>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        </div>
+        </div> */}
       </div>
       <div className="more-recipes">
         <h2>More Recipes</h2>
@@ -88,7 +121,7 @@ const RecipePage = () => {
             <div
               key={otherRecipe.id}
               className="more-recipe-card"
-              onClick={() => navigate(`/recipe/${otherRecipe.id}`)}
+              onClick={() => handleNavigate(otherRecipe.id)}
             >
               {otherRecipe.title}
             </div>
