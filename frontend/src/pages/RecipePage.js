@@ -1,68 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ref, onValue } from 'firebase/database';
+import { database } from '../FirebaseConfig'; // Adjust the path if necessary
 import './RecipePage.css';
-
-const dummyRecipes = [
-  {
-    id: 1,
-    title: 'Telur Dadar Daun Bawang',
-    ingredients: ['Eggs', 'Spring Onion', 'Salt', 'Cooking Oil'],
-    instructions: [
-      'Crack your eggs',
-      'Beat them until homogeneous',
-      'Add your seasoning and spring onions',
-      'Heat pan on medium heat',
-      'Add your choice of oil',
-      'Add your egg to the pan',
-      'Fry until cooked',
-      'Serve',
-    ],
-  },
-  {
-    id: 2,
-    title: 'Cheese Omelette',
-    ingredients: ['Eggs', 'Cheese', 'Salt', 'Pepper'],
-    instructions: [
-      'Crack your eggs',
-      'Beat them until homogeneous',
-      'Add your seasoning and cheese',
-      'Heat pan on medium heat',
-      'Add your choice of oil',
-      'Add your egg mixture to the pan',
-      'Cook until done',
-      'Serve',
-    ],
-  },
-  {
-    id: 3,
-    title: 'Garlic Fried Rice',
-    ingredients: ['Rice', 'Garlic', 'Salt', 'Cooking Oil'],
-    instructions: [
-      'Heat the oil in a pan',
-      'Add garlic and sauté until golden',
-      'Add rice and salt',
-      'Stir-fry until well mixed and heated through',
-      'Serve',
-    ],
-  },
-  {
-    id: 4,
-    title: 'Tomato Salad',
-    ingredients: ['Tomatoes', 'Salt', 'Pepper', 'Olive Oil'],
-    instructions: [
-      'Slice the tomatoes',
-      'Season with salt and pepper',
-      'Drizzle with olive oil',
-      'Toss to combine',
-      'Serve',
-    ],
-  },
-];
 
 const RecipePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const recipe = dummyRecipes.find((recipe) => recipe.id === parseInt(id));
+  const [recipe, setRecipe] = useState(null);
+  const [otherRecipes, setOtherRecipes] = useState([]);
+
+  useEffect(() => {
+    const recipeRef = ref(database, `recipes/${id}`);
+    const recipesRef = ref(database, 'recipes');
+
+    onValue(recipeRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setRecipe({ id, ...data });
+      } else {
+        setRecipe(null);
+      }
+    });
+
+    onValue(recipesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const recipeList = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key],
+        }));
+        if (recipe) {
+          setOtherRecipes(getSimilarRecipes(recipeList.filter((recipe) => recipe.id !== id), recipe));
+        }
+      }
+    });
+  }, [id, recipe]);
+
+  const getSimilarRecipes = (allRecipes, currentRecipe) => {
+    if (!currentRecipe || !currentRecipe.ingredients) {
+      return [];
+    }
+
+    return allRecipes
+      .map(recipe => {
+        const ingredientMatchCount = recipe.ingredients?.filter(ingredient =>
+          currentRecipe.ingredients.includes(ingredient)
+        ).length || 0;
+        const regionMatch = recipe.region === currentRecipe.region ? 1 : 0;
+        return { ...recipe, score: ingredientMatchCount + regionMatch };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4);
+  };
+
+  const handleNavigate = (recipeId) => {
+    navigate(`/recipe/${recipeId}`);
+    window.scrollTo(0, 0);
+  };
+
+  const handleBack = () => {
+    navigate(-1);
+    window.scrollTo(-100, 0);
+  };
 
   if (!recipe) {
     return <p>Recipe not found</p>;
@@ -70,20 +70,31 @@ const RecipePage = () => {
 
   return (
     <div className="recipe-page">
-      <button onClick={() => navigate(-1)}>Back</button>
-      <h1>{recipe.title}</h1>
-      <div className="recipe-image">[Image Placeholder]</div>
+      <button onClick={handleBack}>Back</button>
+      <div className="recipe-header">
+        <div className="recipe-header-content">
+          <div className="recipe-image">
+            <img src={recipe.image} alt={recipe.title} /> {/* Replace with actual image source */}
+          </div>
+          <h1>{recipe.title}</h1>
+          <p>by: {recipe.author}</p>
+        </div>
+      </div>
       <div className="recipe-details">
         <div className="recipe-card">
           <h2>Background</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          <p>{recipe.background}</p>
         </div>
         <div className="recipe-card">
           <h2>Ingredients</h2>
           <ul>
-            {recipe.ingredients.map((ingredient, index) => (
-              <li key={index}>{ingredient}</li>
-            ))}
+            {recipe.amount_ingredients ? (
+              recipe.amount_ingredients.map((ingredient, index) => (
+                <li key={index}>{ingredient}</li>
+              ))
+            ) : (
+              <li>No ingredients available</li>
+            )}
           </ul>
         </div>
         <div className="recipe-card">
@@ -94,20 +105,24 @@ const RecipePage = () => {
             ))}
           </ol>
         </div>
-        <div className="recipe-card">
+        {/* <div className="recipe-card">
           <h2>Reviews</h2>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
         </div>
         <div className="recipe-card">
           <h2>Comments</h2>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        </div>
+        </div> */}
       </div>
       <div className="more-recipes">
         <h2>More Recipes</h2>
         <div className="more-recipes-list">
-          {dummyRecipes.map((otherRecipe) => (
-            <div key={otherRecipe.id} className="more-recipe-card">
+          {otherRecipes.map((otherRecipe) => (
+            <div
+              key={otherRecipe.id}
+              className="more-recipe-card"
+              onClick={() => handleNavigate(otherRecipe.id)}
+            >
               {otherRecipe.title}
             </div>
           ))}

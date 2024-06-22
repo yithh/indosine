@@ -9,7 +9,7 @@ body {
 .content {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 85vh;
   padding-top: 80px; /* Adjust based on navbar height */
 }
 
